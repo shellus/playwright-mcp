@@ -1,0 +1,17 @@
+services:
+  playwright-mcp:
+    build: ./build
+    container_name: playwright-mcp
+    shm_size: 2g
+    init: true
+    environment:
+      - VNC_PASSWORD=${VNC_PASSWORD:-playwright}
+    volumes:
+      - ./data:/data
+    networks:
+      - nginx
+    restart: unless-stopped
+
+networks:
+  nginx:
+    external: true

@@ -54,6 +54,13 @@ sed -i "s/'resize', 'off'/'resize', 'remote'/g" /usr/share/novnc/app/ui.js 2>/de
 
 # Start Chrome with CDP enabled (persistent browser)
 mkdir -p /data/chrome-profile
+
+# Build extension loading args
+EXTENSION_ARGS=""
+if [ -d "/data/extensions/switchyomega" ]; then
+  EXTENSION_ARGS="--load-extension=/data/extensions/switchyomega"
+fi
+
 google-chrome \
   --no-sandbox \
   --disable-gpu \
@@ -62,6 +69,7 @@ google-chrome \
   --user-data-dir=/data/chrome-profile \
   --no-first-run \
   --start-maximized \
+  $EXTENSION_ARGS \
   "about:blank" &
 
 # Wait for Chrome CDP to be ready and get WebSocket URL

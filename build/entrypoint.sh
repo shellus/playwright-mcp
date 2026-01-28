@@ -4,16 +4,53 @@ set -e
 # Clean up stale locks
 rm -f /tmp/.X99-lock
 
-# Start Xvfb
-Xvfb :99 -screen 0 1920x1080x24 &
+# Set Chinese locale
+export LANG=zh_CN.UTF-8
+export LC_ALL=zh_CN.UTF-8
+
+# Setup VNC password
+mkdir -p ~/.vnc
+echo ${VNC_PASSWORD:-playwright} | vncpasswd -f > ~/.vnc/passwd
+chmod 600 ~/.vnc/passwd
+
+# Start Xvnc (supports dynamic resolution via RandR)
+Xvnc :99 -geometry 1920x1080 -depth 24 \
+  -rfbport 5900 \
+  -PasswordFile ~/.vnc/passwd \
+  -AlwaysShared \
+  -AcceptSetDesktopSize \
+  -SecurityTypes VncAuth \
+  -desktop "Playwright MCP" &
+
 sleep 2
 export DISPLAY=:99
 
-# Start x11vnc
-x11vnc -display :99 -forever -shared -rfbport 5900 -passwd ${VNC_PASSWORD:-playwright} &
+# Start dbus (required for fcitx)
+eval $(dbus-launch --sh-syntax)
+export DBUS_SESSION_BUS_ADDRESS
 
-# Start noVNC websockify
+# Setup input method environment
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export DefaultIMModule=fcitx
+
+# Start fcitx input method
+fcitx -d &
+sleep 1
+
+# Start openbox window manager (required for Chrome to maximize/resize)
+openbox &
+sleep 1
+
+# Create index.html redirect to vnc.html
+echo '<html><head><meta http-equiv="refresh" content="0;url=vnc.html"></head></html>' > /usr/share/novnc/index.html
+
+# Start noVNC with auto-resize enabled
 websockify --web=/usr/share/novnc 6080 localhost:5900 &
+
+# Patch noVNC to enable resize by default
+sed -i "s/'resize', 'off'/'resize', 'remote'/g" /usr/share/novnc/app/ui.js 2>/dev/null || true
 
 # Start Chrome with CDP enabled (persistent browser)
 mkdir -p /data/chrome-profile

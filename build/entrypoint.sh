@@ -25,6 +25,14 @@ Xvnc :99 -geometry 1920x1080 -depth 24 \
 sleep 2
 export DISPLAY=:99
 
+# Enable VNC clipboard support
+vncconfig -display :99 -nowin &
+sleep 1
+
+# Sync X11 PRIMARY and CLIPBOARD selections
+autocutsel -fork
+autocutsel -selection PRIMARY -fork
+
 # Start dbus (required for fcitx)
 eval $(dbus-launch --sh-syntax)
 export DBUS_SESSION_BUS_ADDRESS

@@ -2,16 +2,19 @@ FROM mcr.microsoft.com/playwright/mcp:latest
 
 USER root
 
-# Install TigerVNC, noVNC, Chinese fonts and input method
+# Install TigerVNC, websockify, Chinese fonts and input method
+# Note: noVNC installed from source for clipboard support
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # VNC (TigerVNC supports dynamic resolution)
-    tigervnc-standalone-server tigervnc-common tigervnc-tools novnc websockify \
+    tigervnc-standalone-server tigervnc-common tigervnc-tools websockify \
     x11-xserver-utils \
     # Window manager (required for Chrome to maximize/resize properly)
     openbox \
     # Chinese locale and fonts
-    locales fonts-noto-cjk fonts-wqy-zenhei \
+    locales fonts-noto-cjk fonts-noto-cjk-extra fonts-wqy-zenhei fonts-wqy-microhei \
+    # Clipboard sync
+    autocutsel \
     # Input method
     fcitx fcitx-googlepinyin fcitx-ui-classic dbus-x11 im-config && \
     # Generate Chinese locale
@@ -38,6 +41,17 @@ RUN mkdir -p /root/.config/fcitx/conf && \
     echo '[Program]' >> /root/.config/fcitx/config && \
     echo 'DelayStart=2' >> /root/.config/fcitx/config && \
     echo 'ShareStateAmongWindow=All' >> /root/.config/fcitx/config
+
+# Copy noVNC v1.6.0 (with auto clipboard support)
+COPY novnc-src/ /usr/share/novnc/
+
+# Copy patches
+COPY patches/ /patches/
+
+# Configure fontconfig for Chinese fonts (system-wide)
+RUN mkdir -p /etc/fonts/conf.d && \
+    cp /patches/fonts.conf /etc/fonts/local.conf && \
+    fc-cache -fv
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

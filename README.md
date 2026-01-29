@@ -39,8 +39,8 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `VNC_PASSWORD` | VNC 访问密码 | `playwright` |
-| `MCP_PASSWORD` | MCP 端点认证密码（nginx 配置） | - |
+| `VNC_PASSWORD` | VNC 访问密码（必填） | - |
+| `MCP_TOKEN` | MCP 认证 Token（必填） | - |
 
 ## 访问地址
 
@@ -52,7 +52,7 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 
 ## MCP 认证
 
-MCP 端点通过 nginx 进行 Basic Auth 认证，密码在 nginx 配置中设置。
+MCP 服务使用 Bearer Token 认证，在 `.env` 中设置 `MCP_TOKEN`。
 
 ## MCP 客户端配置
 
@@ -61,7 +61,7 @@ MCP 端点通过 nginx 进行 Basic Auth 认证，密码在 nginx 配置中设�
 ```bash
 claude mcp add playwright https://playwright.jjcc.fun/mcp \
   -t http -s user \
-  -H "Authorization: Basic <base64编码的密码>"
+  -H "Authorization: Bearer <your-token>"
 ```
 
 ### Gemini CLI
@@ -69,7 +69,7 @@ claude mcp add playwright https://playwright.jjcc.fun/mcp \
 ```bash
 gemini mcp add playwright "https://playwright.jjcc.fun/mcp" \
   -t http -s user \
-  -H "Authorization: Basic <base64编码的密码>" \
+  -H "Authorization: Bearer <your-token>" \
   --trust
 ```
 
@@ -81,7 +81,7 @@ gemini mcp add playwright "https://playwright.jjcc.fun/mcp" \
     "playwright": {
       "url": "https://playwright.jjcc.fun/mcp",
       "headers": {
-        "Authorization": "Basic <base64编码的密码>"
+        "Authorization": "Bearer <your-token>"
       }
     }
   }
@@ -99,10 +99,11 @@ cd /data/compose/playwright-mcp && docker compose up -d
 ```
 playwright-mcp/
 ├── docker-compose.yml
-├── .env                 # VNC_PASSWORD, MCP_PASSWORD
+├── .env                 # VNC_PASSWORD, MCP_TOKEN
 ├── build/
 │   ├── Dockerfile       # 基于 playwright/mcp 镜像
 │   ├── entrypoint.sh    # 启动脚本
+│   ├── nginx/           # MCP Bearer Token 认证代理
 │   ├── novnc-src/       # noVNC 1.6.0 源码（含自动剪贴板修改）
 │   └── patches/         # 配置补丁
 │       └── fonts.conf   # 中文字体配置

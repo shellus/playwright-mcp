@@ -9,8 +9,12 @@ export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
 # Setup VNC password
+if [ -z "$VNC_PASSWORD" ]; then
+  echo "Error: VNC_PASSWORD is required"
+  exit 1
+fi
 mkdir -p ~/.vnc
-echo ${VNC_PASSWORD:-playwright} | vncpasswd -f > ~/.vnc/passwd
+echo "$VNC_PASSWORD" | vncpasswd -f > ~/.vnc/passwd
 chmod 600 ~/.vnc/passwd
 
 # Start Xvnc (supports dynamic resolution via RandR)
@@ -97,10 +101,29 @@ if [ -z "$WS_URL" ]; then
   exit 1
 fi
 
-# Start Playwright MCP connecting to existing Chrome
-exec node /app/cli.js \
-  --port 8931 \
-  --host 0.0.0.0 \
+# Start Playwright MCP on internal port (no external access)
+MCP_INTERNAL_PORT=8932
+node /app/cli.js \
+  --port $MCP_INTERNAL_PORT \
+  --host 127.0.0.1 \
   --allowed-hosts '*' \
   --caps vision,pdf \
-  --cdp-endpoint "$WS_URL"
+  --cdp-endpoint "$WS_URL" &
+
+# Wait for MCP to be ready
+echo "Waiting for MCP to start..."
+for i in {1..30}; do
+  if curl -s http://127.0.0.1:$MCP_INTERNAL_PORT > /dev/null 2>&1; then
+    echo "MCP ready on port $MCP_INTERNAL_PORT"
+    break
+  fi
+  sleep 1
+done
+
+# Start auth nginx on external port
+if [ -z "$MCP_TOKEN" ]; then
+  echo "Error: MCP_TOKEN is required"
+  exit 1
+fi
+sed "s/__MCP_TOKEN__/$MCP_TOKEN/g" /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+exec nginx -g 'daemon off;'

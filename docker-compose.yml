@@ -5,7 +5,8 @@ services:
     shm_size: 2g
     init: true
     environment:
-      - VNC_PASSWORD=${VNC_PASSWORD:-playwright}
+      - VNC_PASSWORD=${VNC_PASSWORD:?VNC_PASSWORD is required}
+      - MCP_TOKEN=${MCP_TOKEN:?MCP_TOKEN is required}
     volumes:
       - ./data:/data
     networks:

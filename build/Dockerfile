@@ -16,7 +16,9 @@ RUN apt-get update && \
     # Clipboard sync
     autocutsel \
     # Input method
-    fcitx fcitx-googlepinyin fcitx-ui-classic dbus-x11 im-config && \
+    fcitx fcitx-googlepinyin fcitx-ui-classic dbus-x11 im-config \
+    # Auth proxy
+    nginx && \
     # Generate Chinese locale
     echo "zh_CN.UTF-8 UTF-8" >> /etc/locale.gen && \
     locale-gen zh_CN.UTF-8 && \
@@ -54,6 +56,7 @@ RUN mkdir -p /etc/fonts/conf.d && \
     fc-cache -fv
 
 COPY entrypoint.sh /entrypoint.sh
+COPY nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8931 6080

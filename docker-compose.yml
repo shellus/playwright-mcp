@@ -9,10 +9,7 @@ services:
       - MCP_TOKEN=${MCP_TOKEN:?MCP_TOKEN is required}
     volumes:
       - ./data:/data
-    networks:
-      - nginx
+    ports:
+      - "6080:6080"
+      - "8931:8931"
     restart: unless-stopped
-
-networks:
-  nginx:
-    external: true

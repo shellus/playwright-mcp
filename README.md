@@ -6,11 +6,6 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 
 ```
 ┌─────────────────────────────────────┐
-│  nginx (playwright.jjcc.fun)        │
-│  ├── /mcp        → :8931 (需认证)   │
-│  ├── /websockify → :6080 (VNC WS)   │
-│  └── /           → :6080 (noVNC)    │
-├─────────────────────────────────────┤
 │  playwright-mcp (单容器)            │
 │  ├── Xvnc :99     虚拟显示器(TigerVNC)│
 │  ├── openbox      窗口管理器        │
@@ -42,12 +37,19 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 | `VNC_PASSWORD` | VNC 访问密码（必填） | - |
 | `MCP_TOKEN` | MCP 认证 Token（必填） | - |
 
+## 端口
+
+| 端口 | 用途 |
+|------|------|
+| 6080 | noVNC Web 界面 |
+| 8931 | MCP 端点 |
+
 ## 访问地址
 
 | 用途 | 地址 |
 |------|------|
-| MCP 端点 | `https://playwright.jjcc.fun/mcp` (需认证) |
-| VNC 界面 | `https://playwright.jjcc.fun/` |
+| MCP 端点 | `http://<host>:8931/mcp` |
+| VNC 界面 | `http://<host>:6080/` |
 | VNC 密码 | 见 `.env` 中的 `VNC_PASSWORD` |
 
 ## MCP 认证
@@ -59,7 +61,7 @@ MCP 服务使用 Bearer Token 认证，在 `.env` 中设置 `MCP_TOKEN`。
 ### Claude Code
 
 ```bash
-claude mcp add playwright https://playwright.jjcc.fun/mcp \
+claude mcp add playwright http://<host>:8931/mcp \
   -t http -s user \
   -H "Authorization: Bearer <your-token>"
 ```
@@ -67,7 +69,7 @@ claude mcp add playwright https://playwright.jjcc.fun/mcp \
 ### Gemini CLI
 
 ```bash
-gemini mcp add playwright "https://playwright.jjcc.fun/mcp" \
+gemini mcp add playwright "http://<host>:8931/mcp" \
   -t http -s user \
   -H "Authorization: Bearer <your-token>" \
   --trust
@@ -79,7 +81,7 @@ gemini mcp add playwright "https://playwright.jjcc.fun/mcp" \
 {
   "mcpServers": {
     "playwright": {
-      "url": "https://playwright.jjcc.fun/mcp",
+      "url": "http://<host>:8931/mcp",
       "headers": {
         "Authorization": "Bearer <your-token>"
       }
@@ -91,7 +93,7 @@ gemini mcp add playwright "https://playwright.jjcc.fun/mcp" \
 ## 启动
 
 ```bash
-cd /data/compose/playwright-mcp && docker compose up -d
+docker compose up -d
 ```
 
 ## 文件结构

@@ -114,7 +114,11 @@ node /app/cli.js \
 echo "Waiting for MCP to start..."
 for i in {1..30}; do
   if curl -s http://127.0.0.1:$MCP_INTERNAL_PORT > /dev/null 2>&1; then
-    echo "MCP ready on port $MCP_INTERNAL_PORT"
+    echo ""
+    echo "=== MCP Ready ==="
+    echo "External endpoint: http://<host>:8931/mcp (with Bearer Token auth)"
+    echo "Ignore the localhost:8932 config above, that is internal only."
+    echo ""
     break
   fi
   sleep 1

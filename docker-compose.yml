@@ -12,4 +12,5 @@ services:
     ports:
       - "6080:6080"
       - "8931:8931"
+      - "8933:8933"  # 截图文件服务
     restart: unless-stopped

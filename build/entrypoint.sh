@@ -124,6 +124,11 @@ for i in {1..30}; do
   sleep 1
 done
 
+# Start screenshot file server
+mkdir -p /tmp/playwright-output
+cd /tmp/playwright-output && python3 -m http.server 8933 --bind 0.0.0.0 &
+cd /
+
 # Start auth nginx on external port
 if [ -z "$MCP_TOKEN" ]; then
   echo "Error: MCP_TOKEN is required"

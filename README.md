@@ -12,7 +12,8 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 │  ├── Chrome       浏览器            │
 │  ├── fcitx        中文输入法        │
 │  ├── noVNC :6080  Web VNC          │
-│  └── MCP :8931    AI 控制接口      │
+│  ├── MCP :8931    AI 控制接口      │
+│  └── 截图服务 :8933 截图文件访问    │
 └─────────────────────────────────────┘
 ```
 
@@ -43,6 +44,7 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 |------|------|
 | 6080 | noVNC Web 界面 |
 | 8931 | MCP 端点 |
+| 8933 | 截图文件服务 |
 
 ## 访问地址
 
@@ -50,6 +52,7 @@ AI 和人工共享同一个浏览器，支持手动点击验证码。
 |------|------|
 | MCP 端点 | `http://<host>:8931/mcp` |
 | VNC 界面 | `http://<host>:6080/` |
+| 截图文件 | `http://<host>:8933/<filename>` |
 | VNC 密码 | 见 `.env` 中的 `VNC_PASSWORD` |
 
 ## MCP 认证
@@ -142,3 +145,38 @@ playwright-mcp/
 - Gemini CLI 存在 JSON Schema 兼容性问题，工具调用可能报错
 - Claude Code 可正常使用所有 Playwright MCP 工具
 - Chrome profile 持久化，`docker compose down && up` 不会丢失数据
+
+## Nginx 反向代理配置
+
+如果使用 nginx 反向代理，截图文件服务需要使用 `rewrite` 剥离路径前缀：
+
+```nginx
+# 截图文件服务
+location /screenshots/ {
+    set $upstream_screenshots http://playwright-mcp:8933;
+    rewrite ^/screenshots/(.*)$ /$1 break;
+    proxy_pass $upstream_screenshots;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+
+# MCP 端点
+location /mcp {
+    set $upstream_mcp http://playwright-mcp:8931;
+    proxy_pass $upstream_mcp;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_read_timeout 300s;
+}
+
+# noVNC (需要 WebSocket 支持)
+location / {
+    set $upstream_novnc http://playwright-mcp:6080;
+    proxy_pass $upstream_novnc;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 86400;
+}
+```
